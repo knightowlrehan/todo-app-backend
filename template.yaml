@@ -16,12 +16,26 @@ Globals:
     Environment:
       Variables:
         TABLE_NAME: !Ref TodoTable
+        IMAGES_BUCKET_NAME: !Ref TodoImagesBucket
   Api:
     Cors:
       AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
       AllowHeaders: "'Content-Type,Authorization'"
       AllowOrigin: "'*'"
 Resources:
+  #S3 Bucket for todo images
+  TodoImagesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "todo-images-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
   #Dynamodb table resource for todo items
   TodoTable:
     Type: AWS::DynamoDB::Table
@@ -165,6 +179,84 @@ Resources:
         EntryPoints:
           - app.ts
 
+  #upload image to S3
+  UploadImageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/upload-image/
+      Handler: app.lambdaHandler
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref TodoImagesBucket
+      Runtime: nodejs24.x
+      Architectures:
+        - x86_64
+      Events:
+        UploadImage:
+          Type: Api
+          Properties:
+            Path: /images/upload
+            Method: post
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        EntryPoints:
+          - app.ts
+
+  #get image presigned URL
+  GetImageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/get-image/
+      Handler: app.lambdaHandler
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref TodoImagesBucket
+      Runtime: nodejs24.x
+      Architectures:
+        - x86_64
+      Events:
+        GetImage:
+          Type: Api
+          Properties:
+            Path: /images/{todoId}/{imageId}
+            Method: get
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        EntryPoints:
+          - app.ts
+
+  #delete image from S3
+  DeleteImageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/delete-image/
+      Handler: app.lambdaHandler
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref TodoImagesBucket
+      Runtime: nodejs24.x
+      Architectures:
+        - x86_64
+      Events:
+        DeleteImage:
+          Type: Api
+          Properties:
+            Path: /images/{todoId}/{imageId}
+            Method: delete
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        EntryPoints:
+          - app.ts
+
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
     Properties:
@@ -179,16 +271,9 @@ Resources:
         Ref: ApplicationResourceGroup
       AutoConfigurationEnabled: "true"
 Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  HelloWorldApi:
-    Description: API Gateway endpoint URL for Prod stage for Hello World
-      function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/hello/"
-  HelloWorldFunction:
-    Description: Hello World Lambda Function ARN
-    Value: !GetAtt HelloWorldFunction.Arn
-  HelloWorldFunctionIamRole:
-    Description: Implicit IAM Role created for Hello World function
-    Value: !GetAtt HelloWorldFunctionRole.Arn
+  TodoTableName:
+    Description: DynamoDB table for todo items
+    Value: !Ref TodoTable
+  TodoImagesBucketName:
+    Description: S3 bucket for todo images
+    Value: !Ref TodoImagesBucket
