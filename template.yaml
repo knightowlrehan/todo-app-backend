@@ -58,6 +58,8 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref TodoTable
+        - S3CrudPolicy:
+            BucketName: !Ref TodoImagesBucket
       Runtime: nodejs24.x
       Architectures:
         - x86_64
@@ -136,6 +138,8 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref TodoTable
+        - S3CrudPolicy:
+            BucketName: !Ref TodoImagesBucket
       Runtime: nodejs24.x
       Architectures:
         - x86_64
@@ -162,6 +166,8 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref TodoTable
+        - S3CrudPolicy:
+            BucketName: !Ref TodoImagesBucket
       Runtime: nodejs24.x
       Architectures:
         - x86_64
@@ -188,6 +194,8 @@ Resources:
       Policies:
         - S3CrudPolicy:
             BucketName: !Ref TodoImagesBucket
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TodoTable
       Runtime: nodejs24.x
       Architectures:
         - x86_64
@@ -240,6 +248,8 @@ Resources:
       Policies:
         - S3CrudPolicy:
             BucketName: !Ref TodoImagesBucket
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TodoTable
       Runtime: nodejs24.x
       Architectures:
         - x86_64
